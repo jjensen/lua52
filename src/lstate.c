@@ -260,6 +260,12 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
   g->gcpause = LUAI_GCPAUSE;
   g->gcmajorinc = LUAI_GCMAJOR;
   g->gcstepmul = LUAI_GCMUL;
+#if LUA_C41FASTREF_SUPPORT
+  g->c42refArray = NULL;
+  g->c42refSize = 0;
+  g->c42refFree = LUA_C42FASTREF_NONEXT;
+  setnilvalue(&g->c42RefNilValue);
+#endif /* LUA_C41FASTREF_SUPPORT */
   for (i=0; i < LUA_NUMTAGS; i++) g->mt[i] = NULL;
   if (luaD_rawrunprotected(L, f_luaopen, NULL) != LUA_OK) {
     /* memory allocation error: free partial state */

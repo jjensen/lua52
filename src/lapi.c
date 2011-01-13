@@ -51,6 +51,18 @@ static TValue *index2addr (lua_State *L, int idx) {
     api_check(L, idx != 0 && -idx <= L->top - (ci->func + 1), "invalid index");
     return L->top + idx;
   }
+#if LUA_C41FASTREF_SUPPORT
+  else if (idx <= LUA_C42FASTREFNIL) {
+    struct c42_lua_Ref* refobj;
+    if (idx == LUA_C42FASTREFNIL)
+      return &G(L)->c42RefNilValue;
+    idx = -idx + LUA_C42FASTREFNIL - 1;
+    refobj = &G(L)->c42refArray[idx];
+    if (0 <= idx && idx < G(L)->c42refSize && refobj->st == LUA_C42FASTREF_LOCK)
+      return &refobj->o;
+	return &G(L)->c42RefNilValue;
+  }
+#endif /* LUA_C41FASTREF_SUPPORT */
   else if (idx == LUA_REGISTRYINDEX)
     return &G(L)->l_registry;
   else {  /* upvalues */
@@ -1214,3 +1226,84 @@ LUA_API void lua_upvaluejoin (lua_State *L, int fidx1, int n1,
   luaC_objbarrier(L, f1, *up2);
 }
 
+
+
+#if LUA_C41FASTREF_SUPPORT
+
+static void growfastref (lua_State *L) {
+  global_State *g = G(L);
+  int origsize = g->c42refSize;
+  int c42refFree;
+  struct c42_lua_Ref* c42refArray;
+  int i;
+  luaM_growvector(L, g->c42refArray, g->c42refSize, g->c42refSize, struct c42_lua_Ref,
+                  MAX_INT, "reference table overflow");
+
+  c42refFree = g->c42refFree;
+  i = g->c42refSize - 1;
+  c42refArray = &g->c42refArray[i];
+  for (; i >= origsize; --i, --c42refArray) {
+    c42refArray->st = c42refFree;
+    c42refFree = i;
+  }
+  g->c42refFree = c42refFree;
+}
+
+LUA_API int lua_c41getfastref (lua_State *L, int ref) {
+  struct c42_lua_Ref* refobj;
+  if (ref == LUA_C42FASTREFNIL) {
+    ttype(L->top) = LUA_TNIL;
+    api_incr_top(L);
+    return 1;
+  }
+  ref = -ref + LUA_C42FASTREFNIL - 1;
+  refobj = &G(L)->c42refArray[ref];
+  if (0 <= ref && ref < G(L)->c42refSize && refobj->st == LUA_C42FASTREF_LOCK)
+    *L->top = refobj->o;
+  else
+    return 0;
+  api_incr_top(L);
+  return 1;
+}
+
+
+LUA_API int lua_c41fastrefindex (lua_State *L, int idx) {
+  int ref;
+  TValue* value = index2addr(L, idx);
+  if (ttype(value) == LUA_TNIL)
+    return LUA_C42FASTREFNIL;
+  else {
+    global_State *g = G(L);
+	struct c42_lua_Ref* refobj;
+    if (g->c42refFree == LUA_C42FASTREF_NONEXT) {  /* is there a free place? */
+      growfastref(L);
+      value = index2addr(L, idx);
+	}
+    ref = g->c42refFree;
+	refobj = &g->c42refArray[ref];
+    g->c42refFree = refobj->st;
+    refobj->o = *value;
+    refobj->st = LUA_C42FASTREF_LOCK;
+  }
+  return LUA_C42FASTREFNIL - 1 - ref;
+}
+
+
+LUA_API int lua_c41fastref (lua_State *L) {
+  int ref = lua_c41fastrefindex(L, -1);
+  lua_pop(L, 1);
+  return ref;
+}
+
+
+LUA_API void lua_c41fastunref (lua_State *L, int ref) {
+  ref = -ref + LUA_C42FASTREFNIL - 1;
+  if (ref >= 0) {
+    global_State* g = G(L);
+    luai_apicheck(L, ref < g->c42refSize && g->c42refArray[ref].st < 0); //, "invalid ref");
+    g->c42refArray[ref].st = g->c42refFree;
+    g->c42refFree = ref;
+  }
+}
+
+#endif /* LUA_C41FASTREF_SUPPORT */

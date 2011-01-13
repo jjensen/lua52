@@ -39,6 +39,23 @@
 */
 
 
+#if LUA_C41FASTREF_SUPPORT
+
+/*
+** marks for Reference array
+*/
+#define LUA_C42FASTREF_NONEXT          -1      /* to end the free list */
+#define LUA_C42FASTREF_LOCK            -4
+
+
+struct c42_lua_Ref {
+  TValue o;
+  int st;  /* can be LUA_C42FASTREF_LOCK, LUA_C42FASTREF_NONEXT, or next (for free list) */
+};
+
+#endif /* LUA_C41FASTREF_SUPPORT */
+
+
 struct lua_longjmp;  /* defined in ldo.c */
 
 
@@ -144,6 +161,12 @@ typedef struct global_State {
   TString *memerrmsg;  /* memory-error message */
   TString *tmname[TM_N];  /* array with tag-method names */
   struct Table *mt[LUA_NUMTAGS];  /* metatables for basic types */
+#if LUA_C41FASTREF_SUPPORT
+  struct c42_lua_Ref *c42refArray;  /* locked objects */
+  int c42refSize;  /* size of c42refArray */
+  int c42refFree;  /* list of free positions in c42refArray */
+  TValue c42RefNilValue;
+#endif /* LUA_C41FASTREF_SUPPORT */
 } global_State;
 
 

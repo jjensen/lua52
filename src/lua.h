@@ -414,6 +414,18 @@ struct lua_Debug {
 /* }====================================================================== */
 
 
+#if LUA_C41FASTREF_SUPPORT
+/* pre-defined references */
+#define LUA_C42FASTREFNIL	(-199999999)
+
+LUA_API int lua_c41getfastref (lua_State *L, int ref);
+LUA_API int lua_c41fastrefindex (lua_State *L, int idx);
+LUA_API int lua_c41fastref (lua_State *L);
+LUA_API void lua_c41fastunref (lua_State *L, int ref);
+
+#endif /* LUA_C41FASTREF_SUPPORT */
+
+
 /******************************************************************************
 * Copyright (C) 1994-2010 Lua.org, PUC-Rio.  All rights reserved.
 *

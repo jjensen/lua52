@@ -847,6 +847,18 @@ void luaC_freeallobjects (lua_State *L) {
 }
 
 
+#if LUA_C41FASTREF_SUPPORT
+static void marklock (global_State *g)
+{
+  int i;
+  for (i=0; i<g->c42refSize; i++) {
+    if (g->c42refArray[i].st == LUA_C42FASTREF_LOCK)
+      markvalue(g, &g->c42refArray[i].o);
+  }
+}
+#endif /* LUA_C41FASTREF_SUPPORT */
+
+
 static void atomic (lua_State *L) {
   global_State *g = G(L);
   lua_assert(!iswhite(obj2gco(g->mainthread)));
@@ -854,6 +866,9 @@ static void atomic (lua_State *L) {
   /* registry and global metatables may be changed by API */
   markvalue(g, &g->l_registry);
   markmt(g);  /* mark basic metatables */
+#if LUA_C41FASTREF_SUPPORT
+  marklock(g); /* mark locked objects */
+#endif /* LUA_C41FASTREF_SUPPORT */
   /* remark occasional upvalues of (maybe) dead threads */
   remarkupvals(g);
   /* traverse objects caught by write barrier and by 'remarkupvals' */

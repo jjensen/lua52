@@ -12,6 +12,11 @@
 #include <stddef.h>
 
 
+#if !defined(LUA_C41FASTREF_SUPPORT)
+#define LUA_C41FASTREF_SUPPORT 1
+#endif /* LUA_C41FASTREF_SUPPORT */
+
+
 /*
 ** ==================================================================
 ** Search for "@@" to find all configurable definitions.
