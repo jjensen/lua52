@@ -137,6 +137,17 @@ static void init_registry (lua_State *L, global_State *g) {
   /* registry[LUA_RIDX_GLOBALS] = table of globals */
   sethvalue(L, &mt, luaH_new(L));
   setobj2t(L, luaH_setint(L, registry, LUA_RIDX_GLOBALS), &mt);
+#if LUA_FASTREF_SUPPORT
+  {
+    TValue n;
+
+    sethvalue(L, &G(L)->l_refs, luaH_new(L));  /* refs */
+    setnvalue(&n, 0);
+    setobj2t(L, luaH_setint(L, hvalue(&G(L)->l_refs), LUA_RIDX_FASTREF_FREELIST), &n);
+
+    setnilvalue(&g->fastrefNilValue);
+  }
+#endif /* LUA_FASTREF */
 }
 
 

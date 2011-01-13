@@ -326,6 +326,9 @@ static void markroot (lua_State *L) {
   markobject(g, g->mainthread);
   markvalue(g, &g->l_registry);
   markmt(g);
+#if LUA_FASTREF_SUPPORT
+  markvalue(g, &g->l_refs);
+#endif /* LUA_FASTREF_SUPPORT */
   markbeingfnz(g);  /* mark any finalizing object left from previous cycle */
 }
 
@@ -854,6 +857,9 @@ static void atomic (lua_State *L) {
   /* registry and global metatables may be changed by API */
   markvalue(g, &g->l_registry);
   markmt(g);  /* mark basic metatables */
+#if LUA_FASTREF_SUPPORT
+  markvalue(g, &g->l_refs);
+#endif /* LUA_FASTREF_SUPPORT */
   /* remark occasional upvalues of (maybe) dead threads */
   remarkupvals(g);
   /* traverse objects caught by write barrier and by 'remarkupvals' */
