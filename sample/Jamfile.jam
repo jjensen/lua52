@@ -1,0 +1,11 @@
+SubDir LUA_ROOT sample ;
+
+LUA_OUTPUT_DIRECTORY = $(ALL_LOCATE_TARGET)/image ;
+C.OutputPath * : $(ALL_LOCATE_TARGET)/image ;
+
+SubInclude LUA_ROOT sample : lua ;
+
+C.IncludeDirectories benchmark : $(LUA_ROOT)/src ;
+C.LinkLibraries benchmark : lua52static ;
+
+C.Application benchmark : benchmark.c ;

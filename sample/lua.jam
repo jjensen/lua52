@@ -1,0 +1,115 @@
+SubDir LUA_ROOT src ;
+
+LUA_OUTPUT_DIRECTORY ?= $(ALL_LOCATE_TARGET)/../bin.$(COMPILER.$(PLATFORM)).$(PLATFORM) ;
+
+rule ApplyLua TARGET : OPTIONS {
+	if $(PLATFORM) in win32 win64 {
+		if shared in $(OPTIONS) {
+			C.Defines $(TARGET) : LUA_BUILD_AS_DLL ;
+		}
+	} else if $(PLATFORM) in linux32 linux64 {
+		C.Defines $(TARGET) : LUA_USE_LINUX ;
+	} else if $(PLATFORM) in macosx32 macosx64 {
+		C.Defines $(TARGET) : LUA_USE_LINUX ;
+	}
+}
+
+rule BuildLuaLibrary TARGET : OPTIONS {
+	ActiveTarget $(TARGET) ;
+
+	ApplyLua : $(OPTIONS) ;
+
+	local type ;
+	if shared in $(OPTIONS) {
+		type = shared ;
+
+		C.OutputPath : $(LUA_OUTPUT_DIRECTORY) ;
+		C.OutputPostfix : : release ;
+	}
+
+	C.Library :
+			lapi.c
+			lapi.h
+			lauxlib.c
+			lauxlib.h
+			lbaselib.c
+			lbitlib.c
+			lcode.c
+			lcode.h
+			lcorolib.c
+			lctype.c
+			lctype.h
+			ldblib.c
+			ldebug.c
+			ldebug.h
+			ldo.c
+			ldo.h
+			ldump.c
+			lfunc.c
+			lfunc.h
+			lgc.c
+			lgc.h
+			linit.c
+			liolib.c
+			llex.c
+			llex.h
+			llimits.h
+			lmathlib.c
+			lmem.c
+			lmem.h
+			loadlib.c
+			lobject.c
+			lobject.h
+			lopcodes.c
+			lopcodes.h
+			loslib.c
+			lparser.c
+			lparser.h
+			lstate.c
+			lstate.h
+			lstring.c
+			lstring.h
+			lstrlib.c
+			ltable.c
+			ltable.h
+			ltablib.c
+			ltm.c
+			ltm.h
+			lua.h
+			lua.hpp
+			luaconf.h
+			lualib.h
+			lundump.c
+			lundump.h
+			lvm.c
+			lvm.h
+			lzio.c
+			lzio.h
+		: $(type)
+	;
+}
+
+BuildLuaLibrary lua52static ;
+BuildLuaLibrary lua52 : shared ;
+
+
+###############################################################################
+# Build lua executable
+###############################################################################
+ActiveTarget "lua" ;
+
+ApplyLua ;
+C.LinkLibraries : lua52 ;
+C.OutputPostfix : : release ;
+C.Application : lua.c ;
+
+
+###############################################################################
+# Build luac executable
+###############################################################################
+ActiveTarget luac ;
+
+ApplyLua ;
+C.LinkLibraries : lua52static ;
+C.OutputPostfix : : release ;
+C.Application :  luac.c ;
