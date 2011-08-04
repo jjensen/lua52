@@ -461,7 +461,7 @@
    with a DirectX idiosyncrasy */
 #if defined(_MSC_VER) && defined(M_IX86)		/* { */
 
-#define MS_ASMTRICK
+//#define MS_ASMTRICK
 
 #else				/* }{ */
 /* the next definition uses a trick that should work on any machine
