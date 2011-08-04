@@ -506,7 +506,7 @@
 #if defined(__i386__) || defined(__i386) || defined(__X86__) || \
     defined(_M_IX86)
 
-#define LUA_NANTRICKLE
+//#define LUA_NANTRICKLE
 
 #endif
 
