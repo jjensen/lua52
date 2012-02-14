@@ -11,6 +11,11 @@
 #include <limits.h>
 #include <stddef.h>
 
+#ifndef LUA_TILDE_DEBUGGER
+#if defined(_MSC_VER)
+#define LUA_TILDE_DEBUGGER 1
+#endif
+#endif /* LUA_TILDE_DEBUGGER */
 
 /*
 ** ==================================================================

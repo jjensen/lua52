@@ -1,0 +1,8 @@
+SubDir TOP ;
+
+local SRCS =
+		*.*@-luac.c@-lua.c
+		tilde/*.*
+;
+
+C.Application "lua" : $(SRCS) ;
