@@ -1,5 +1,5 @@
 /*
-** $Id: luaconf.h,v 1.161 2011/07/08 20:07:11 roberto Exp $
+** $Id: luaconf.h,v 1.170 2011/12/06 16:58:36 roberto Exp $
 ** Configuration file for Lua
 ** See Copyright Notice in lua.h
 */
@@ -29,8 +29,8 @@
 #endif
 
 
-#if !defined(LUA_ANSI) && defined(_WIN32)
-#define LUA_WIN
+#if !defined(LUA_ANSI) && defined(_WIN32) && !defined(_WIN32_WCE)
+#define LUA_WIN		/* enable goodies for regular Windows platforms */
 #endif
 
 #if defined(LUA_WIN)
@@ -70,6 +70,7 @@
 #define LUA_USE_ISATTY
 #define LUA_USE_POPEN
 #define LUA_USE_ULONGJMP
+#define LUA_USE_GMTIME_R
 #endif
 
 
@@ -173,13 +174,8 @@
 ** give a warning about it. To avoid these warnings, change to the
 ** default definition.
 */
-#if defined(luaall_c)		/* { */
-#define LUAI_FUNC	static
-#define LUAI_DDEC	static
-#define LUAI_DDEF	static
-
-#elif defined(__GNUC__) && ((__GNUC__*100 + __GNUC_MINOR__) >= 302) && \
-      defined(__ELF__)
+#if defined(__GNUC__) && ((__GNUC__*100 + __GNUC_MINOR__) >= 302) && \
+    defined(__ELF__)		/* { */
 #define LUAI_FUNC	__attribute__((visibility("hidden"))) extern
 #define LUAI_DDEC	LUAI_FUNC
 #define LUAI_DDEF	/* empty */
@@ -210,10 +206,14 @@
 
 /*
 @@ luai_writestring/luai_writeline define how 'print' prints its results.
+** They are only used in libraries and the stand-alone program. (The #if
+** avoids including 'stdio.h' everywhere.)
 */
+#if defined(LUA_LIB) || defined(lua_c)
 #include <stdio.h>
 #define luai_writestring(s,l)	fwrite((s), sizeof(char), (l), stdout)
 #define luai_writeline()	(luai_writestring("\n", 1), fflush(stdout))
+#endif
 
 /*
 @@ luai_writestringerror defines how to print error messages.
@@ -418,7 +418,7 @@
 */
 
 /* the following operations need the math library */
-#if defined(lobject_c) || defined(lvm_c) || defined(luaall_c)
+#if defined(lobject_c) || defined(lvm_c)
 #include <math.h>
 #define luai_nummod(L,a,b)	((a) - floor((a)/(b))*(b))
 #define luai_numpow(L,a,b)	(pow(a,b))
@@ -459,7 +459,7 @@
 
 /* On a Microsoft compiler on a Pentium, use assembler to avoid clashes
    with a DirectX idiosyncrasy */
-#if defined(_MSC_VER) && defined(M_IX86)		/* { */
+#if defined(LUA_WIN) && defined(_MSC_VER) && defined(_M_IX86)	/* { */
 
 #define MS_ASMTRICK
 
@@ -492,12 +492,13 @@
 
 
 /*
-@@ LUA_NANTRICKLE/LUA_NANTRICKBE controls the use of a trick to pack all
-** types into a single double value, using NaN values to represent
-** non-number values. The trick only works on 32-bit machines (ints and
-** pointers are 32-bit values) with numbers represented as IEEE 754-2008
-** doubles with conventional endianess (12345678 or 87654321), in CPUs
-** that do not produce signaling NaN values (all NaNs are quiet).
+@@ LUA_NANTRICK_LE/LUA_NANTRICK_BE controls the use of a trick to
+** pack all types into a single double value, using NaN values to
+** represent non-number values. The trick only works on 32-bit machines
+** (ints and pointers are 32-bit values) with numbers represented as
+** IEEE 754-2008 doubles with conventional endianess (12345678 or
+** 87654321), in CPUs that do not produce signaling NaN values (all NaNs
+** are quiet).
 */
 #if defined(LUA_CORE) && \
     defined(LUA_NUMBER_DOUBLE) && !defined(LUA_ANSI)	/* { */
@@ -506,7 +507,7 @@
 #if defined(__i386__) || defined(__i386) || defined(__X86__) || \
     defined(_M_IX86)
 
-#define LUA_NANTRICKLE
+#define LUA_NANTRICK_LE
 
 #endif
 
